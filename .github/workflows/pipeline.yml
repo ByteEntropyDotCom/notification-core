@@ -45,8 +45,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Converts "ByteEntropyDotCom/notification-core" to "byteentropydotcom/notification-core"
-      # This is mandatory because Docker tags must be lowercase.
       - name: Lowercase Repository Name
         run: |
           echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
