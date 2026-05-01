@@ -5,7 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
-  # 1. ADDED: Manual trigger from the "Actions" tab
+  # Allows manual triggering from the "Actions" tab
   workflow_dispatch:
 
 jobs:
@@ -25,6 +25,13 @@ jobs:
       - name: Build and Test with Maven
         run: mvn clean install
 
+      - name: Upload Test Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: target/surefire-reports/
+
   docker-publish:
     needs: build-and-test
     # Run if on main branch OR if triggered manually
@@ -32,13 +39,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # Required to push to GHCR
+      packages: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. UPDATED: Login to GitHub Container Registry
+      # Converts "ByteEntropyDotCom/notification-core" to "byteentropydotcom/notification-core"
+      # This is mandatory because Docker tags must be lowercase.
+      - name: Lowercase Repository Name
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -46,13 +58,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. UPDATED: Push to GHCR
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          # Tags must be lowercase: ghcr.io/username/repository-name:latest
           tags: |
-            ghcr.io/${{ github.repository_owner }}/notification-core:latest
-            ghcr.io/${{ github.repository_owner }}/notification-core:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LOWER }}:latest
+            ghcr.io/${{ env.REPO_LOWER }}:${{ github.sha }}
