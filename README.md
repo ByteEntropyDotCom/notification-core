@@ -36,7 +36,8 @@ JSON
   "payload": {
     "name": "John Doe"
   }
-}```
+}
+```
 
 ## 📦 CI/CD
 Automated pipeline via GitHub Actions:
